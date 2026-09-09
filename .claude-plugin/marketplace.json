@@ -1,6 +1,6 @@
 {
-  "name": "superpowers-dev",
-  "description": "Development marketplace for Superpowers core skills library",
+  "name": "yasherisa-superpowers",
+  "description": "Superpowers fork: adds the Proof Loop (repo-task-proof-loop) option to writing-plans execution handoff",
   "owner": {
     "name": "Jesse Vincent",
     "email": "jesse@fsck.com"

@@ -58,7 +58,7 @@ independently testable deliverable.
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended), superpowers:executing-plans, or repo-task-proof-loop (seed its spec from this plan) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -154,11 +154,13 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 After saving the plan, offer execution choice:
 
-**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Two execution options:**
+**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Three execution options:**
 
 **1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
 
 **2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
+
+**3. Proof Loop** - Auditable spec-freeze → build → evidence → fresh-verifier → fix loop via repo-task-proof-loop; leaves repo-local proof in `.agent/tasks/<TASK_ID>/`, installs project subagents into `.claude/agents/`, and adds managed workflow blocks to the repo's `AGENTS.md` and `CLAUDE.md`
 
 **Which approach?"**
 
@@ -169,3 +171,8 @@ After saving the plan, offer execution choice:
 **If Inline Execution chosen:**
 - **REQUIRED SUB-SKILL:** Use superpowers:executing-plans
 - Batch execution with checkpoints for review
+
+**If Proof Loop chosen:**
+- **REQUIRED SUB-SKILL:** Use repo-task-proof-loop
+- Seed the spec from the plan you just saved: `scripts/task_loop.py init --task-id <TASK_ID> --task-file docs/superpowers/plans/<filename>.md` (script path relative to that skill's root; shell cwd inside the target repo)
+- Then let the skill drive with `run <TASK_ID>`

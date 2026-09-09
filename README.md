@@ -1,5 +1,17 @@
 # Superpowers
 
+> **This is a fork of [obra/superpowers](https://github.com/obra/superpowers).** One change on top of upstream: the `writing-plans` execution handoff offers a third path, **Proof Loop**, which runs the plan through [repo-task-proof-loop](https://github.com/DenisSergeevitch/repo-task-proof-loop) (spec-freeze → build → evidence → fresh-verifier → fix, with repo-local proof in `.agent/tasks/<TASK_ID>/`). The plan header names that skill too, so cold executors see all three options.
+>
+> Install in Claude Code (replaces the official plugin — disable `superpowers@claude-plugins-official` first):
+>
+> ```bash
+> claude plugin marketplace add yasherisa/superpowers
+> claude plugin install superpowers@yasherisa-superpowers
+> ```
+>
+> Option 3 only works if `repo-task-proof-loop` is installed as a skill, e.g. `git clone https://github.com/DenisSergeevitch/repo-task-proof-loop ~/.claude/skills/repo-task-proof-loop`.
+> Everything below is the upstream README.
+
 Superpowers is a complete software development methodology for your coding agents, built on top of a set of composable skills and some initial instructions that make sure your agent uses them.
 
 ## Table of Contents
