@@ -58,7 +58,7 @@ independently testable deliverable.
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended), superpowers:executing-plans, or repo-task-proof-loop (seed its spec from this plan) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended), superpowers:executing-plans, or repo-task-proof-loop (link it with `init --plan`) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -69,6 +69,8 @@ independently testable deliverable.
 **Spec:** [path to the spec/design doc this plan implements — the plan
 argues from the spec, so the spec travels with it; executors read both]
 
+**Proof task:** none
+
 ## Global Constraints
 
 [The spec's project-wide requirements — version floors, dependency limits,
@@ -78,6 +80,8 @@ include this section.]
 
 ---
 ```
+
+`**Proof task:**` stays `none` unless the Proof Loop path is chosen at handoff; `repo-task-proof-loop`'s `init --plan` then replaces it with `.agent/tasks/<TASK_ID>/`, the repo-local folder holding this plan's frozen spec, evidence, and verdict. Executors who find a path there read that folder alongside the spec.
 
 ## Task Structure
 
@@ -160,7 +164,7 @@ After saving the plan, offer execution choice:
 
 **2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
 
-**3. Proof Loop** - Auditable spec-freeze → build → evidence → fresh-verifier → fix loop via repo-task-proof-loop; leaves repo-local proof in `.agent/tasks/<TASK_ID>/`, installs project subagents into `.claude/agents/`, and adds managed workflow blocks to the repo's `AGENTS.md` and `CLAUDE.md`
+**3. Proof Loop** - Auditable spec-freeze → build → evidence → fresh-verifier → fix loop via repo-task-proof-loop; leaves repo-local proof in `.agent/tasks/<TASK_ID>/` linked both ways with this plan and its spec, installs project subagents into `.claude/agents/`, and adds managed workflow blocks to the repo's `AGENTS.md` and `CLAUDE.md`
 
 **Which approach?"**
 
@@ -174,5 +178,6 @@ After saving the plan, offer execution choice:
 
 **If Proof Loop chosen:**
 - **REQUIRED SUB-SKILL:** Use repo-task-proof-loop
-- Seed the spec from the plan you just saved: `scripts/task_loop.py init --task-id <TASK_ID> --task-file docs/superpowers/plans/<filename>.md` (script path relative to that skill's root; shell cwd inside the target repo)
+- Task id = the plan's basename without its date prefix (`2026-09-10-widget-cache.md` → `widget-cache`)
+- Link the plan you just saved: `scripts/task_loop.py init --task-id <TASK_ID> --plan docs/superpowers/plans/<filename>.md` (script path relative to that skill's root; shell cwd inside the target repo). This seeds the task statement from the plan's Goal, records the plan and its Spec under `## Sources` in `spec.md`, and sets the plan header's `**Proof task:**` line.
 - Then let the skill drive with `run <TASK_ID>`
