@@ -1,6 +1,9 @@
 # Superpowers
 
-> **This is a fork of [obra/superpowers](https://github.com/obra/superpowers).** One change on top of upstream: the `writing-plans` execution handoff offers a third path, **Proof Loop**, which runs the plan through [repo-task-proof-loop](https://github.com/DenisSergeevitch/repo-task-proof-loop) (spec-freeze → build → evidence → fresh-verifier → fix, with repo-local proof in `.agent/tasks/<TASK_ID>/`). The plan header names that skill too, so cold executors see all three options.
+> **This is a fork of [obra/superpowers](https://github.com/obra/superpowers).** Two changes on top of upstream:
+>
+> 1. The `writing-plans` execution handoff offers a third path, **Proof Loop**, which runs the plan through [repo-task-proof-loop](https://github.com/DenisSergeevitch/repo-task-proof-loop) (spec-freeze → build → evidence → fresh-verifier → fix, with repo-local proof in `.agent/tasks/<TASK_ID>/`). The plan header names that skill too, so cold executors see all three options.
+> 2. A **`ship`** skill (tests → pre-deploy checks → deploy → live verification of every touched user path → push own files only → three-line status). `finishing-a-development-branch` offers it as option 4 in projects that deploy to production; targets and paths come from the project's deploy checklist in CLAUDE.md.
 >
 > Install in Claude Code (replaces the official plugin — disable `superpowers@claude-plugins-official` first):
 >

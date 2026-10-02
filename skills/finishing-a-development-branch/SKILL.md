@@ -7,7 +7,7 @@ description: Use when implementation is complete, all tests pass, and you need t
 
 ## Overview
 
-**Core principle:** Verify tests → Detect environment → Present options → Execute choice → Clean up.
+**Core principle:** Verify tests → Detect environment → Present options → Execute choice (Ship → superpowers:ship) → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
@@ -52,7 +52,9 @@ Confirm before merging: merging into the wrong base is expensive to undo.
 
 ## Step 4: Present Options
 
-**Normal repo and named-branch worktree — present exactly these 3 options:**
+**Normal repo and named-branch worktree — present exactly these 3 options,
+plus option 4 when the project deploys to production (its CLAUDE.md has a
+deploy checklist, or the plan names deploy targets):**
 
 ```
 Implementation complete. What would you like to do?
@@ -60,6 +62,7 @@ Implementation complete. What would you like to do?
 1. Merge back to <base-branch> locally
 2. Push and create a Pull Request
 3. Keep the branch as-is (I'll handle it later)
+4. Ship: merge into <base-branch> if needed, deploy, verify live, push
 
 Which option?
 ```
@@ -129,6 +132,22 @@ Keep the worktree — your human partner iterates on PR feedback there.
 
 Report: "Keeping branch <name>. Worktree preserved at <path>."
 
+### Option 4: Ship
+
+If the work is on a feature branch, merge it first exactly as in Option 1,
+including the test run on the merged result — a failing merged result stops
+everything before anything is deployed. If the work is already on
+<base-branch>, there is nothing to merge.
+
+Then, from the main repo root:
+
+- **REQUIRED SUB-SKILL:** Use superpowers:ship
+- It deploys, verifies every touched user path live, pushes, and reports
+
+Once ship reports, clean up the worktree (Step 6) and delete the merged
+branch as in Option 1. If ship stopped on a failed live check, leave the
+worktree in place — the fix happens there.
+
 ### If your human partner asks to discard the work
 
 This path exists only as a response to an explicit request to throw the
@@ -158,7 +177,7 @@ git branch -D <feature-branch>
 
 ## Step 6: Cleanup Workspace
 
-**Runs for Option 1 and confirmed discards.** Options 2 and 3 always
+**Runs for Options 1 and 4 and confirmed discards.** Options 2 and 3 always
 preserve the worktree. Both callers have already changed directory to the
 main repo root — worktree removal must run from outside the worktree —
 and use the `GIT_DIR`/`GIT_COMMON`/`WORKTREE_PATH` values captured in
@@ -207,6 +226,7 @@ place. If your platform provides a workspace-exit tool, use it.
 | 1. Merge locally | yes | - | - | yes |
 | 2. Create PR | - | yes | yes | - |
 | 3. Keep as-is | - | - | yes | - |
+| 4. Ship (deploying projects) | if on a branch | yes, after live verification | - | yes |
 | Discard (explicit request only) | - | - | - | yes (force) |
 
 ## Common Rationalizations
@@ -215,6 +235,8 @@ place. If your platform provides a workspace-exit tool, use it.
 |--------|---------|
 | "Tests passed earlier this session" | Run the suite on the tree you are about to integrate. A green run only proves the tree it ran on. |
 | "They obviously want it merged" | Integration is your human partner's decision. Present the menu and wait. |
+| "They always ship, I'll skip the menu and deploy" | Shipping touches production. Present the menu and wait for option 4. |
+| "Merged and deployed — that's done" | Deployed is not verified. Option 4 runs superpowers:ship, which ends only after the live paths pass and the push lands. |
 | "They seem done with this feature — I'll offer to discard it" | The menu is complete as written. Discard happens only when your human partner asks for it in so many words. |
 | "'Yeah, get rid of it' counts as confirmation" | Only the typed word `discard` authorizes deletion. |
 | "The PR is up, so the worktree is clutter now" | PR feedback gets fixed in that worktree. It stays until the work lands. |
