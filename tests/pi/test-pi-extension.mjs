@@ -34,14 +34,6 @@ function firstHandler(handlers, event) {
   return eventHandlers[0];
 }
 
-function textOf(message) {
-  if (typeof message.content === 'string') return message.content;
-  return message.content
-    .filter((part) => part.type === 'text')
-    .map((part) => part.text)
-    .join('\n');
-}
-
 test('package.json declares a pi package with skills and extension resources', async () => {
   const pkg = await readPackageJson();
 
@@ -51,13 +43,10 @@ test('package.json declares a pi package with skills and extension resources', a
   assert.deepEqual(pkg.pi.extensions, ['./.pi/extensions/superpowers.ts']);
 });
 
-test('extension registers lifecycle hooks without pre-compaction injection', async () => {
+test('extension registers resource discovery and the per-run system prompt hook only', async () => {
   const { handlers } = await loadExtension();
 
-  for (const event of ['resources_discover', 'session_start', 'session_compact', 'context', 'agent_end']) {
-    assert.equal((handlers.get(event) ?? []).length, 1, `missing ${event} handler`);
-  }
-  assert.equal((handlers.get('session_before_compact') ?? []).length, 0);
+  assert.deepEqual([...handlers.keys()].sort(), ['before_agent_start', 'resources_discover']);
 });
 
 test('resources_discover contributes the bundled skills directory', async () => {
@@ -69,53 +58,31 @@ test('resources_discover contributes the bundled skills directory', async () => 
   assert.deepEqual(result.skillPaths, [resolve(repoRoot, 'skills')]);
 });
 
-test('startup context injects the bootstrap as one user message until agent_end', async () => {
+test('every agent run, not only the first, gets the bootstrap at the end of its system prompt', async () => {
   const { handlers } = await loadExtension();
-  const sessionStart = firstHandler(handlers, 'session_start');
-  const context = firstHandler(handlers, 'context');
-  const agentEnd = firstHandler(handlers, 'agent_end');
+  const beforeAgentStart = firstHandler(handlers, 'before_agent_start');
+  const systemPrompt = 'You are a coding agent.';
 
-  await sessionStart({ type: 'session_start', reason: 'startup' }, {});
+  for (const prompt of ['Reply with exactly: one', "Let's make a react todo list"]) {
+    const result = await beforeAgentStart({ type: 'before_agent_start', prompt, systemPrompt }, {});
+    assert.ok(result.systemPrompt.startsWith(systemPrompt));
+    assert.match(result.systemPrompt, /You have superpowers/);
+    assert.match(result.systemPrompt, /Pi tool mapping/);
+  }
 
-  const originalMessages = [
-    { role: 'user', content: [{ type: 'text', text: 'Let us make a react todo list' }], timestamp: 1 },
-  ];
-  const result = await context({ type: 'context', messages: originalMessages }, {});
-
-  assert.equal(result.messages.length, 2);
-  assert.equal(result.messages[0].role, 'user');
-  assert.match(textOf(result.messages[0]), /You have superpowers/);
-  assert.match(textOf(result.messages[0]), /Pi tool mapping/);
-  assert.equal(result.messages[1], originalMessages[0]);
-
-  const repeatedProviderRequest = await context({ type: 'context', messages: originalMessages }, {});
-  assert.equal(repeatedProviderRequest.messages.length, 2);
-  assert.match(textOf(repeatedProviderRequest.messages[0]), /You have superpowers/);
-
-  const alreadyInjected = await context({ type: 'context', messages: result.messages }, {});
-  assert.equal(alreadyInjected, undefined, 'bootstrap should not duplicate when already present');
-
-  await agentEnd({ type: 'agent_end', messages: [] }, {});
-  const afterEnd = await context({ type: 'context', messages: originalMessages }, {});
-  assert.equal(afterEnd, undefined, 'startup bootstrap should clear after agent_end');
+  const already = await beforeAgentStart({ type: 'before_agent_start', prompt: 'x', systemPrompt: (await beforeAgentStart({ type: 'before_agent_start', prompt: 'x', systemPrompt }, {})).systemPrompt }, {});
+  assert.equal(already, undefined, 'bootstrap should not duplicate when already present');
 });
 
-test('session_compact injects bootstrap after compaction summaries, not before compaction', async () => {
+test("a harness catalog's clause against loading skills is replaced by using-superpowers' rule", async () => {
   const { handlers } = await loadExtension();
-  const sessionCompact = firstHandler(handlers, 'session_compact');
-  const context = firstHandler(handlers, 'context');
+  const beforeAgentStart = firstHandler(handlers, 'before_agent_start');
+  const catalog = "Use the read tool to load a skill's file when its description matches the task and its instructions would change the work; keyword overlap or mere availability is not a reason.";
 
-  await sessionCompact({ type: 'session_compact', compactionEntry: {}, fromExtension: false }, {});
+  const result = await beforeAgentStart({ type: 'before_agent_start', prompt: 'x', systemPrompt: catalog }, {});
 
-  const summary = { role: 'compactionSummary', summary: 'Prior work summary', tokensBefore: 123, timestamp: 1 };
-  const user = { role: 'user', content: [{ type: 'text', text: 'Continue' }], timestamp: 2 };
-  const result = await context({ type: 'context', messages: [summary, user] }, {});
-
-  assert.equal(result.messages.length, 3);
-  assert.equal(result.messages[0], summary);
-  assert.equal(result.messages[1].role, 'user');
-  assert.match(textOf(result.messages[1]), /You have superpowers/);
-  assert.equal(result.messages[2], user);
+  assert.doesNotMatch(result.systemPrompt, /mere availability is not a reason/);
+  assert.match(result.systemPrompt, /even a 1% chance a skill applies, load it before acting/);
 });
 
 test('pi tools reference documents pi-specific mappings', async () => {
